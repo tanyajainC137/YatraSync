@@ -1,0 +1,728 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>YatraSync - Your Auto, Waiting Before You Exit</title>
+  <meta name="description" content="Seamless metro-to-auto transitions for Bangalore. Uses AI-powered coach detection and auto dispatch to eliminate last-mile wait times.">
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  <script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          fontFamily: {
+            sans: ['Inter', 'sans-serif'],
+          },
+        }
+      }
+    }
+  </script>
+  <style>
+    @keyframes ping {
+      75%, 100% {
+        transform: scale(2);
+        opacity: 0;
+      }
+    }
+    @keyframes bounce {
+      0%, 100% {
+        transform: translateY(-25%);
+        animation-timing-function: cubic-bezier(0.8, 0, 1, 1);
+      }
+      50% {
+        transform: translateY(0);
+        animation-timing-function: cubic-bezier(0, 0, 0.2, 1);
+      }
+    }
+    @keyframes pulse {
+      0%, 100% { opacity: 1; }
+      50% { opacity: 0.5; }
+    }
+    .animate-ping { animation: ping 1s cubic-bezier(0, 0, 0.2, 1) infinite; }
+    .animate-bounce { animation: bounce 1s infinite; }
+    .animate-pulse { animation: pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite; }
+    html { scroll-behavior: smooth; }
+  </style>
+</head>
+<body class="font-sans antialiased">
+
+  <!-- NAVBAR -->
+  <nav class="fixed left-0 right-0 top-0 z-50 border-b border-gray-800/50 bg-[#0F0F0F]/80 backdrop-blur-xl">
+    <div class="mx-auto flex h-16 max-w-7xl items-center justify-between px-6">
+      <a href="#" class="flex items-center gap-2">
+        <div class="flex h-8 w-8 items-center justify-center rounded-lg bg-gradient-to-br from-[#FFD100] to-amber-500">
+          <svg class="h-5 w-5 text-[#0F0F0F]" viewBox="0 0 24 24" fill="currentColor">
+            <path d="M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5" />
+          </svg>
+        </div>
+        <span class="text-lg font-bold text-white">YatraSync</span>
+      </a>
+      <div class="hidden items-center gap-8 md:flex">
+        <a href="#problem" class="text-sm text-gray-400 transition-colors hover:text-white">Problem</a>
+        <a href="#solution" class="text-sm text-gray-400 transition-colors hover:text-white">Solution</a>
+        <a href="#market" class="text-sm text-gray-400 transition-colors hover:text-white">Market</a>
+      </div>
+      <div class="hidden md:block">
+        <a href="#cta" class="inline-flex h-9 items-center justify-center rounded-md bg-[#FFD100] px-4 text-sm font-medium text-[#0F0F0F] transition-colors hover:bg-[#FFD100]/90">
+          Join Waitlist
+        </a>
+      </div>
+      <button id="menuToggle" class="md:hidden" aria-label="Toggle menu">
+        <svg class="h-6 w-6 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16" />
+        </svg>
+      </button>
+    </div>
+    <div id="mobileMenu" class="hidden border-t border-gray-800 bg-[#0F0F0F] px-6 py-4 md:hidden">
+      <div class="flex flex-col gap-4">
+        <a href="#problem" class="text-gray-400 transition-colors hover:text-white">Problem</a>
+        <a href="#solution" class="text-gray-400 transition-colors hover:text-white">Solution</a>
+        <a href="#market" class="text-gray-400 transition-colors hover:text-white">Market</a>
+        <a href="#cta" class="mt-2 inline-flex w-full items-center justify-center rounded-md bg-[#FFD100] py-2 text-sm font-medium text-[#0F0F0F]">
+          Join Waitlist
+        </a>
+      </div>
+    </div>
+  </nav>
+
+  <!-- HERO SECTION -->
+  <section class="relative min-h-screen overflow-hidden bg-[#0F0F0F]">
+    <div class="absolute top-0 left-1/4 h-[500px] w-[500px] rounded-full bg-[#FFD100]/20 blur-[120px]"></div>
+    <div class="absolute bottom-0 right-1/4 h-[400px] w-[400px] rounded-full bg-[#6B21A8]/30 blur-[100px]"></div>
+
+    <div class="relative mx-auto flex min-h-screen max-w-7xl flex-col items-center justify-center px-6 py-24 lg:flex-row lg:gap-16 lg:py-32">
+      <div class="flex-1 text-center lg:text-left">
+        <div class="mb-6 inline-flex items-center gap-2 rounded-full border border-[#FFD100]/30 bg-[#FFD100]/10 px-4 py-2 text-sm text-[#FFD100]">
+          <svg class="h-4 w-4" fill="currentColor" viewBox="0 0 24 24"><path d="M12 2L15.09 8.26L22 9.27L17 14.14L18.18 21.02L12 17.77L5.82 21.02L7 14.14L2 9.27L8.91 8.26L12 2Z"/></svg>
+          <span>Backed by Y Combinator W25</span>
+        </div>
+
+        <h1 class="text-4xl font-bold leading-tight tracking-tight text-white sm:text-5xl md:text-6xl lg:text-7xl">
+          Your Auto, <span class="bg-gradient-to-r from-[#FFD100] to-[#FFD100]/80 bg-clip-text text-transparent">Waiting</span> Before You Exit
+        </h1>
+
+        <p class="mx-auto mt-6 max-w-xl text-lg text-gray-400 lg:mx-0 lg:text-xl">
+          Seamless metro-to-auto transitions. We know exactly which coach you're in and dispatch your ride before you even tap out.
+        </p>
+
+        <div class="mt-10 flex flex-col items-center gap-4 sm:flex-row lg:justify-start">
+          <a href="#cta" class="group inline-flex h-14 w-full items-center justify-center rounded-md bg-[#FFD100] px-8 text-lg font-semibold text-[#0F0F0F] transition-all hover:bg-[#FFD100]/90 hover:shadow-[0_0_40px_rgba(255,209,0,0.4)] sm:w-auto">
+            Join the Waitlist
+            <svg class="ml-2 h-5 w-5 transition-transform group-hover:translate-x-1" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 8l4 4m0 0l-4 4m4-4H3"/></svg>
+          </a>
+          <button class="h-14 w-full rounded-md border border-gray-700 bg-transparent px-8 text-lg text-white transition-colors hover:border-[#6B21A8] hover:bg-[#6B21A8]/10 sm:w-auto">
+            Watch Demo
+          </button>
+        </div>
+
+        <div class="mt-12 flex flex-wrap justify-center gap-8 lg:justify-start">
+          <div class="text-center lg:text-left">
+            <p class="text-3xl font-bold text-[#FFD100]">15M+</p>
+            <p class="text-sm text-gray-500">Daily Commuters</p>
+          </div>
+          <div class="text-center lg:text-left">
+            <p class="text-3xl font-bold text-[#FFD100]">45 min</p>
+            <p class="text-sm text-gray-500">Avg. Time Saved</p>
+          </div>
+          <div class="text-center lg:text-left">
+            <p class="text-3xl font-bold text-[#FFD100]">0</p>
+            <p class="text-sm text-gray-500">Surge Pricing</p>
+          </div>
+        </div>
+      </div>
+
+      <div class="relative mt-12 flex-1 lg:mt-0">
+        <div class="relative overflow-hidden rounded-3xl border border-gray-800 bg-gradient-to-br from-[#6B21A8]/20 to-transparent p-2">
+          <img src="https://hebbkx1anhila5yf.public.blob.vercel-storage.com/image-DjjPcmxOg07v1hXn3qfm6GugnorWfM.png" alt="YatraSync - Woman exiting metro with auto waiting" class="w-full rounded-2xl object-cover" />
+          <div class="absolute bottom-6 left-6 right-6 rounded-2xl border border-gray-700/50 bg-[#0F0F0F]/90 p-4 backdrop-blur-xl">
+            <div class="flex items-center gap-4">
+              <div class="flex h-12 w-12 items-center justify-center rounded-full bg-[#FFD100]">
+                <svg class="h-6 w-6 text-[#0F0F0F]" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7" />
+                </svg>
+              </div>
+              <div class="flex-1">
+                <p class="font-semibold text-white">Auto Dispatched</p>
+                <p class="text-sm text-gray-400">Pillar 3, Exit B - Arriving in 47s</p>
+              </div>
+              <div class="text-right">
+                <p class="text-2xl font-bold text-[#FFD100]">₹89</p>
+                <p class="text-xs text-gray-500">Fixed fare</p>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="absolute bottom-8 left-1/2 -translate-x-1/2">
+      <div class="flex h-10 w-6 items-start justify-center rounded-full border-2 border-gray-600 p-1.5">
+        <div class="h-2 w-1 animate-bounce rounded-full bg-[#FFD100]"></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- PROBLEM SECTION -->
+  <section id="problem" class="relative bg-white py-24 lg:py-32">
+    <div class="mx-auto max-w-7xl px-6">
+      <div class="mx-auto max-w-3xl text-center">
+        <p class="mb-4 text-sm font-semibold uppercase tracking-widest text-[#6B21A8]">The Problem</p>
+        <h2 class="text-3xl font-bold tracking-tight text-gray-900 sm:text-4xl lg:text-5xl">
+          Silk Board Syndrome is <span class="text-[#6B21A8]">Everywhere</span>
+        </h2>
+        <p class="mt-4 text-lg text-gray-600">
+          Bangalore's infamous traffic chaos doesn't end when you exit the metro. The last mile is broken.
+        </p>
+      </div>
+
+      <div class="mt-16 grid gap-6 md:grid-cols-2 lg:grid-cols-4">
+        <div class="group relative overflow-hidden rounded-2xl border border-gray-200 bg-gradient-to-b from-gray-50 to-white p-6 transition-all hover:border-[#6B21A8]/30 hover:shadow-xl">
+          <div class="mb-4 inline-flex h-12 w-12 items-center justify-center rounded-xl bg-[#FFD100]/20">
+            <svg class="h-6 w-6 text-[#FFD100]" fill="none" viewBox="0 0 24 24" stroke="currentColor"><circle cx="12" cy="12" r="10"/><path d="M12 6v6l4 2"/></svg>
+          </div>
+          <p class="text-4xl font-bold text-[#FFD100]">23 min</p>
+          <p class="mt-2 text-sm text-gray-600">Average wait time for auto at metro exit</p>
+          <div class="absolute -right-8 -top-8 h-24 w-24 rounded-full bg-[#FFD100] opacity-10 transition-opacity group-hover:opacity-20"></div>
+        </div>
+
+        <div class="group relative overflow-hidden rounded-2xl border border-gray-200 bg-gradient-to-b from-gray-50 to-white p-6 transition-all hover:border-[#6B21A8]/30 hover:shadow-xl">
+          <div class="mb-4 inline-flex h-12 w-12 items-center justify-center rounded-xl bg-red-500/20">
+            <svg class="h-6 w-6 text-red-500" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"/></svg>
+          </div>
+          <p class="text-4xl font-bold text-red-500">3.2x</p>
+          <p class="mt-2 text-sm text-gray-600">Surge pricing during peak hours</p>
+          <div class="absolute -right-8 -top-8 h-24 w-24 rounded-full bg-red-500 opacity-10 transition-opacity group-hover:opacity-20"></div>
+        </div>
+
+        <div class="group relative overflow-hidden rounded-2xl border border-gray-200 bg-gradient-to-b from-gray-50 to-white p-6 transition-all hover:border-[#6B21A8]/30 hover:shadow-xl">
+          <div class="mb-4 inline-flex h-12 w-12 items-center justify-center rounded-xl bg-[#9333EA]/20">
+            <svg class="h-6 w-6 text-[#9333EA]" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6"/></svg>
+          </div>
+          <p class="text-4xl font-bold text-[#9333EA]">₹847Cr</p>
+          <p class="mt-2 text-sm text-gray-600">Lost annually to commuter inefficiency</p>
+          <div class="absolute -right-8 -top-8 h-24 w-24 rounded-full bg-[#9333EA] opacity-10 transition-opacity group-hover:opacity-20"></div>
+        </div>
+
+        <div class="group relative overflow-hidden rounded-2xl border border-gray-200 bg-gradient-to-b from-gray-50 to-white p-6 transition-all hover:border-[#6B21A8]/30 hover:shadow-xl">
+          <div class="mb-4 inline-flex h-12 w-12 items-center justify-center rounded-xl bg-[#FFD100]/20">
+            <svg class="h-6 w-6 text-[#FFD100]" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z"/></svg>
+          </div>
+          <p class="text-4xl font-bold text-[#FFD100]">68%</p>
+          <p class="mt-2 text-sm text-gray-600">Miss connections due to last-mile chaos</p>
+          <div class="absolute -right-8 -top-8 h-24 w-24 rounded-full bg-[#FFD100] opacity-10 transition-opacity group-hover:opacity-20"></div>
+        </div>
+      </div>
+
+      <!-- Silk Board Visual -->
+      <div class="relative mt-20 overflow-hidden rounded-3xl bg-gradient-to-br from-[#0F0F0F] to-[#1a1a2e] p-8 lg:p-12">
+        <div class="relative z-10 grid gap-8 lg:grid-cols-2 lg:gap-12">
+          <div>
+            <div class="mb-6 inline-flex items-center gap-2 rounded-full bg-red-500/10 px-4 py-2 text-sm text-red-400">
+              <div class="h-2 w-2 animate-pulse rounded-full bg-red-500"></div>
+              Current Reality
+            </div>
+            <h3 class="text-2xl font-bold text-white lg:text-3xl">The Daily Commuter Nightmare</h3>
+            <ul class="mt-6 space-y-4">
+              <li class="flex items-start gap-3 text-gray-400">
+                <span class="mt-1.5 h-2 w-2 flex-shrink-0 rounded-full bg-red-500"></span>
+                Exit metro → Run to find auto → Negotiate fare
+              </li>
+              <li class="flex items-start gap-3 text-gray-400">
+                <span class="mt-1.5 h-2 w-2 flex-shrink-0 rounded-full bg-red-500"></span>
+                Surge pricing catches you off-guard
+              </li>
+              <li class="flex items-start gap-3 text-gray-400">
+                <span class="mt-1.5 h-2 w-2 flex-shrink-0 rounded-full bg-red-500"></span>
+                15-30 min wait in sun/rain for a ride
+              </li>
+              <li class="flex items-start gap-3 text-gray-400">
+                <span class="mt-1.5 h-2 w-2 flex-shrink-0 rounded-full bg-red-500"></span>
+                Miss important meetings, lose productivity
+              </li>
+            </ul>
+          </div>
+
+          <div class="space-y-4">
+            <div class="flex items-center gap-4 rounded-xl border border-gray-800 bg-gray-900/50 p-4 transition-all hover:border-[#FFD100]/30">
+              <div class="flex h-10 w-10 items-center justify-center rounded-full bg-gradient-to-br from-[#FFD100] to-[#6B21A8] text-sm font-bold text-white">1</div>
+              <div class="flex-1"><p class="font-medium text-white">Tap into Metro</p></div>
+              <p class="text-sm text-gray-500">9:00 AM</p>
+            </div>
+            <div class="flex items-center gap-4 rounded-xl border border-gray-800 bg-gray-900/50 p-4 transition-all hover:border-[#FFD100]/30">
+              <div class="flex h-10 w-10 items-center justify-center rounded-full bg-gradient-to-br from-[#FFD100] to-[#6B21A8] text-sm font-bold text-white">2</div>
+              <div class="flex-1"><p class="font-medium text-white">Coach B3 detected</p></div>
+              <p class="text-sm text-gray-500">9:02 AM</p>
+            </div>
+            <div class="flex items-center gap-4 rounded-xl border border-gray-800 bg-gray-900/50 p-4 transition-all hover:border-[#FFD100]/30">
+              <div class="flex h-10 w-10 items-center justify-center rounded-full bg-gradient-to-br from-[#FFD100] to-[#6B21A8] text-sm font-bold text-white">3</div>
+              <div class="flex-1"><p class="font-medium text-white">Auto dispatched to Exit 4</p></div>
+              <p class="text-sm text-gray-500">9:28 AM</p>
+            </div>
+            <div class="flex items-center gap-4 rounded-xl border border-gray-800 bg-gray-900/50 p-4 transition-all hover:border-[#FFD100]/30">
+              <div class="flex h-10 w-10 items-center justify-center rounded-full bg-gradient-to-br from-[#FFD100] to-[#6B21A8] text-sm font-bold text-white">4</div>
+              <div class="flex-1"><p class="font-medium text-white">QR tap out triggers countdown</p></div>
+              <p class="text-sm text-gray-500">9:30 AM</p>
+            </div>
+            <div class="flex items-center gap-4 rounded-xl border border-gray-800 bg-gray-900/50 p-4 transition-all hover:border-[#FFD100]/30">
+              <div class="flex h-10 w-10 items-center justify-center rounded-full bg-gradient-to-br from-[#FFD100] to-[#6B21A8] text-sm font-bold text-white">5</div>
+              <div class="flex-1"><p class="font-medium text-white">Auto waiting at Pillar 7</p></div>
+              <p class="text-sm text-gray-500">9:32 AM</p>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- SOLUTION SECTION -->
+  <section id="solution" class="relative bg-gray-50 py-24 lg:py-32">
+    <div class="absolute left-0 top-0 h-72 w-72 rounded-full bg-[#FFD100]/10 blur-[100px]"></div>
+    <div class="absolute bottom-0 right-0 h-72 w-72 rounded-full bg-[#6B21A8]/10 blur-[100px]"></div>
+
+    <div class="relative mx-auto max-w-7xl px-6">
+      <div class="mx-auto max-w-3xl text-center">
+        <p class="mb-4 text-sm font-semibold uppercase tracking-widest text-[#FFD100]">The Solution</p>
+        <h2 class="text-3xl font-bold tracking-tight text-gray-900 sm:text-4xl lg:text-5xl">
+          Multimodal Magic, <span class="bg-gradient-to-r from-[#FFD100] to-[#6B21A8] bg-clip-text text-transparent">One Tap</span>
+        </h2>
+        <p class="mt-4 text-lg text-gray-600">
+          We've rebuilt the last-mile from the ground up. Hardware meets software meets incentive design.
+        </p>
+      </div>
+
+      <div class="mt-16 grid gap-6 md:grid-cols-2 lg:grid-cols-3">
+        <!-- Feature 1 -->
+        <div class="group relative overflow-hidden rounded-2xl border border-gray-200 bg-white p-8 transition-all hover:border-transparent hover:shadow-2xl">
+          <div class="mb-6 inline-flex h-14 w-14 items-center justify-center rounded-2xl bg-gradient-to-br from-[#FFD100] to-amber-500">
+            <svg class="h-7 w-7 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor"><rect x="5" y="2" width="14" height="20" rx="2" ry="2"/><path d="M12 18h.01"/></svg>
+          </div>
+          <h3 class="mb-3 text-xl font-semibold text-gray-900">Station Beacons + Accelerometer</h3>
+          <p class="text-gray-600">We pinpoint exactly which metro coach you're in using a combination of BLE beacons and your phone's accelerometer data.</p>
+        </div>
+
+        <!-- Feature 2 -->
+        <div class="group relative overflow-hidden rounded-2xl border border-gray-200 bg-white p-8 transition-all hover:border-transparent hover:shadow-2xl">
+          <div class="mb-6 inline-flex h-14 w-14 items-center justify-center rounded-2xl bg-gradient-to-br from-[#9333EA] to-[#6B21A8]">
+            <svg class="h-7 w-7 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z"/><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z"/></svg>
+          </div>
+          <h3 class="mb-3 text-xl font-semibold text-gray-900">Exit Time Calculation</h3>
+          <p class="text-gray-600">Real-time walking time from your specific coach to the nearest exit, accounting for crowd density and escalator status.</p>
+        </div>
+
+        <!-- Feature 3 -->
+        <div class="group relative overflow-hidden rounded-2xl border border-gray-200 bg-white p-8 transition-all hover:border-transparent hover:shadow-2xl">
+          <div class="mb-6 inline-flex h-14 w-14 items-center justify-center rounded-2xl bg-gradient-to-br from-[#FFD100] to-amber-500">
+            <svg class="h-7 w-7 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"/></svg>
+          </div>
+          <h3 class="mb-3 text-xl font-semibold text-gray-900">Auto Pre-Dispatch</h3>
+          <p class="text-gray-600">Your auto is dispatched to a designated 'Fast-Track' pillar just as you approach the exit. Zero wait time.</p>
+        </div>
+
+        <!-- Feature 4 -->
+        <div class="group relative overflow-hidden rounded-2xl border border-gray-200 bg-white p-8 transition-all hover:border-transparent hover:shadow-2xl">
+          <div class="mb-6 inline-flex h-14 w-14 items-center justify-center rounded-2xl bg-gradient-to-br from-[#9333EA] to-[#6B21A8]">
+            <svg class="h-7 w-7 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor"><rect x="3" y="3" width="18" height="18" rx="2"/><path d="M7 7h3v3H7zM14 7h3v3h-3zM7 14h3v3H7zM14 14h3v3h-3z"/></svg>
+          </div>
+          <h3 class="mb-3 text-xl font-semibold text-gray-900">QR Gate Triggers</h3>
+          <p class="text-gray-600">When you tap out, the driver's 'Wait-Time' countdown begins. Perfect synchronization every time.</p>
+        </div>
+
+        <!-- Feature 5 -->
+        <div class="group relative overflow-hidden rounded-2xl border border-gray-200 bg-white p-8 transition-all hover:border-transparent hover:shadow-2xl">
+          <div class="mb-6 inline-flex h-14 w-14 items-center justify-center rounded-2xl bg-gradient-to-br from-[#FFD100] to-amber-500">
+            <svg class="h-7 w-7 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+          </div>
+          <h3 class="mb-3 text-xl font-semibold text-gray-900">Priority Tokens</h3>
+          <p class="text-gray-600">Drivers earn 'Priority Tokens' for successful YatraSync pickups, unlocking next high-value rides.</p>
+        </div>
+
+        <!-- Feature 6 -->
+        <div class="group relative overflow-hidden rounded-2xl border border-gray-200 bg-white p-8 transition-all hover:border-transparent hover:shadow-2xl">
+          <div class="mb-6 inline-flex h-14 w-14 items-center justify-center rounded-2xl bg-gradient-to-br from-[#9333EA] to-[#6B21A8]">
+            <svg class="h-7 w-7 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z"/></svg>
+          </div>
+          <h3 class="mb-3 text-xl font-semibold text-gray-900">SurgeShield AI</h3>
+          <p class="text-gray-600">Predicts crowds 30 mins ahead. Subscribers get locked fixed fares via pooled funds. No surge, ever.</p>
+        </div>
+      </div>
+
+      <!-- How It Works Visual -->
+      <div class="mt-20">
+        <div class="rounded-3xl border border-gray-200 bg-white p-8 lg:p-12">
+          <div class="grid gap-8 lg:grid-cols-2 lg:gap-16">
+            <!-- Animated Map -->
+            <div class="relative overflow-hidden rounded-2xl bg-gradient-to-br from-gray-100 to-gray-200 p-1">
+              <div class="relative h-80 overflow-hidden rounded-xl bg-[#e8e4d8] lg:h-96">
+                <!-- Map Grid Pattern -->
+                <div class="absolute inset-0 opacity-30">
+                  <svg width="100%" height="100%" xmlns="http://www.w3.org/2000/svg">
+                    <defs>
+                      <pattern id="grid" width="40" height="40" patternUnits="userSpaceOnUse">
+                        <path d="M 40 0 L 0 0 0 40" fill="none" stroke="#9ca3af" stroke-width="0.5"/>
+                      </pattern>
+                    </defs>
+                    <rect width="100%" height="100%" fill="url(#grid)" />
+                  </svg>
+                </div>
+                
+                <!-- Roads & Metro -->
+                <svg class="absolute inset-0 h-full w-full" viewBox="0 0 400 300">
+                  <path d="M 0 150 L 400 150" stroke="#d1d5db" stroke-width="20" fill="none"/>
+                  <path d="M 200 0 L 200 300" stroke="#d1d5db" stroke-width="16" fill="none"/>
+                  <path d="M 50 80 L 350 220" stroke="#d1d5db" stroke-width="8" fill="none"/>
+                  <path d="M 30 50 L 100 90 L 200 90 L 320 130" stroke="#6B21A8" stroke-width="6" fill="none" stroke-linecap="round"/>
+                  <circle cx="100" cy="90" r="8" fill="#6B21A8" stroke="white" stroke-width="2"/>
+                  <circle cx="200" cy="90" r="10" fill="#FFD100" stroke="#6B21A8" stroke-width="3"/>
+                  <circle cx="320" cy="130" r="8" fill="#6B21A8" stroke="white" stroke-width="2"/>
+                  <path d="M 200 90 L 200 150 L 280 150" stroke="#FFD100" stroke-width="4" fill="none" stroke-dasharray="8,4" class="animate-pulse"/>
+                  <circle cx="280" cy="150" r="12" fill="#FFD100" stroke="white" stroke-width="2"/>
+                  <text x="280" y="154" text-anchor="middle" fill="#0F0F0F" font-size="10" font-weight="bold">A</text>
+                  <circle cx="200" cy="90" r="6" fill="#6B21A8"/>
+                  <circle cx="200" cy="120" r="4" fill="#6B21A8" opacity="0.6"/>
+                  <circle cx="200" cy="150" r="4" fill="#6B21A8" opacity="0.4"/>
+                </svg>
+                
+                <!-- Labels -->
+                <div class="absolute left-[22%] top-[20%] rounded bg-white/90 px-2 py-1 text-xs font-medium text-[#6B21A8] shadow-sm">MG Road</div>
+                <div class="absolute left-[45%] top-[22%] rounded-lg bg-[#6B21A8] px-2 py-1 text-xs font-bold text-white shadow-lg">Indiranagar</div>
+                <div class="absolute right-[15%] top-[35%] rounded bg-white/90 px-2 py-1 text-xs font-medium text-[#6B21A8] shadow-sm">Trinity</div>
+                
+                <div class="absolute right-[25%] top-[45%] flex items-center gap-1.5 rounded-full bg-[#FFD100] px-3 py-1.5 shadow-lg">
+                  <div class="h-2 w-2 animate-ping rounded-full bg-[#0F0F0F]"></div>
+                  <span class="text-xs font-bold text-[#0F0F0F]">Auto Arriving</span>
+                </div>
+                
+                <div class="absolute left-[48%] top-[38%] rounded bg-white px-2 py-1 text-xs shadow">
+                  <span class="font-semibold text-[#6B21A8]">2 min</span> walk
+                </div>
+              </div>
+              
+              <!-- Floating icons -->
+              <div class="absolute -right-4 -top-4 rounded-xl bg-gradient-to-br from-[#FFD100] to-amber-500 p-3 shadow-lg">
+                <svg class="h-6 w-6 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z"/><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z"/></svg>
+              </div>
+              <div class="absolute -bottom-4 -left-4 rounded-xl bg-gradient-to-br from-[#6B21A8] to-[#9333EA] p-3 shadow-lg">
+                <svg class="h-6 w-6 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"/></svg>
+              </div>
+            </div>
+
+            <!-- Steps -->
+            <div class="flex flex-col justify-center">
+              <h3 class="text-2xl font-bold text-gray-900 lg:text-3xl">How It Actually Works</h3>
+              <div class="mt-8 space-y-6">
+                <div class="flex gap-4">
+                  <span class="flex h-10 w-10 flex-shrink-0 items-center justify-center rounded-full bg-gradient-to-br from-[#FFD100] to-[#6B21A8] text-sm font-bold text-white">01</span>
+                  <div>
+                    <h4 class="font-semibold text-gray-900">Board Metro</h4>
+                    <p class="text-sm text-gray-600">Our beacons detect which coach you enter</p>
+                  </div>
+                </div>
+                <div class="flex gap-4">
+                  <span class="flex h-10 w-10 flex-shrink-0 items-center justify-center rounded-full bg-gradient-to-br from-[#FFD100] to-[#6B21A8] text-sm font-bold text-white">02</span>
+                  <div>
+                    <h4 class="font-semibold text-gray-900">Journey Tracking</h4>
+                    <p class="text-sm text-gray-600">Real-time position updated via accelerometer fusion</p>
+                  </div>
+                </div>
+                <div class="flex gap-4">
+                  <span class="flex h-10 w-10 flex-shrink-0 items-center justify-center rounded-full bg-gradient-to-br from-[#FFD100] to-[#6B21A8] text-sm font-bold text-white">03</span>
+                  <div>
+                    <h4 class="font-semibold text-gray-900">Smart Dispatch</h4>
+                    <p class="text-sm text-gray-600">Auto sent to your optimal exit 2 mins before arrival</p>
+                  </div>
+                </div>
+                <div class="flex gap-4">
+                  <span class="flex h-10 w-10 flex-shrink-0 items-center justify-center rounded-full bg-gradient-to-br from-[#FFD100] to-[#6B21A8] text-sm font-bold text-white">04</span>
+                  <div>
+                    <h4 class="font-semibold text-gray-900">QR Sync</h4>
+                    <p class="text-sm text-gray-600">Tap out triggers driver countdown - perfect timing</p>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- MARKET SECTION -->
+  <section id="market" class="relative overflow-hidden bg-[#0F0F0F] py-24 lg:py-32">
+    <div class="absolute inset-0 bg-[linear-gradient(to_right,#1a1a1a_1px,transparent_1px),linear-gradient(to_bottom,#1a1a1a_1px,transparent_1px)] bg-[size:60px_60px]"></div>
+    <div class="absolute right-0 top-1/4 h-[400px] w-[400px] rounded-full bg-[#FFD100]/10 blur-[120px]"></div>
+    <div class="absolute bottom-0 left-1/4 h-[300px] w-[300px] rounded-full bg-[#6B21A8]/20 blur-[100px]"></div>
+
+    <div class="relative mx-auto max-w-7xl px-6">
+      <div class="mx-auto max-w-3xl text-center">
+        <p class="mb-4 text-sm font-semibold uppercase tracking-widest text-[#FFD100]">Market Opportunity</p>
+        <h2 class="text-3xl font-bold tracking-tight text-white sm:text-4xl lg:text-5xl">
+          Bangalore is Just the <span class="bg-gradient-to-r from-[#FFD100] to-[#9333EA] bg-clip-text text-transparent">Beginning</span>
+        </h2>
+      </div>
+
+      <div class="mt-16 grid gap-6 sm:grid-cols-2 lg:grid-cols-4">
+        <div class="group relative overflow-hidden rounded-2xl border border-gray-800 bg-gray-900/50 p-8 text-center backdrop-blur-sm transition-all hover:border-[#FFD100]/30">
+          <p class="bg-gradient-to-r from-[#FFD100] to-[#9333EA] bg-clip-text text-5xl font-bold text-transparent">15M</p>
+          <p class="mt-3 text-sm text-gray-400">Daily Commuters in Bangalore</p>
+        </div>
+        <div class="group relative overflow-hidden rounded-2xl border border-gray-800 bg-gray-900/50 p-8 text-center backdrop-blur-sm transition-all hover:border-[#FFD100]/30">
+          <p class="bg-gradient-to-r from-[#FFD100] to-[#9333EA] bg-clip-text text-5xl font-bold text-transparent">₹2.4B</p>
+          <p class="mt-3 text-sm text-gray-400">Last-mile market (annual)</p>
+        </div>
+        <div class="group relative overflow-hidden rounded-2xl border border-gray-800 bg-gray-900/50 p-8 text-center backdrop-blur-sm transition-all hover:border-[#FFD100]/30">
+          <p class="bg-gradient-to-r from-[#FFD100] to-[#9333EA] bg-clip-text text-5xl font-bold text-transparent">73%</p>
+          <p class="mt-3 text-sm text-gray-400">Use metro + auto combo</p>
+        </div>
+        <div class="group relative overflow-hidden rounded-2xl border border-gray-800 bg-gray-900/50 p-8 text-center backdrop-blur-sm transition-all hover:border-[#FFD100]/30">
+          <p class="bg-gradient-to-r from-[#FFD100] to-[#9333EA] bg-clip-text text-5xl font-bold text-transparent">4.2M</p>
+          <p class="mt-3 text-sm text-gray-400">Target addressable users</p>
+        </div>
+      </div>
+
+      <!-- Expansion Roadmap -->
+      <div class="mt-20 overflow-hidden rounded-3xl border border-gray-800 bg-gradient-to-br from-gray-900 to-[#0F0F0F] p-8 lg:p-12">
+        <div class="grid gap-8 lg:grid-cols-2 lg:gap-16">
+          <div>
+            <h3 class="text-2xl font-bold text-white lg:text-3xl">Expansion Roadmap</h3>
+            <p class="mt-4 text-gray-400">Starting with Namma Metro's 75+ stations, then scaling to every Indian metro system.</p>
+            <div class="mt-8 space-y-4">
+              <div class="flex items-center justify-between rounded-xl border border-gray-800 bg-gray-900/50 p-4">
+                <div class="flex items-center gap-3">
+                  <div class="h-3 w-3 rounded-full bg-[#FFD100]"></div>
+                  <span class="font-medium text-white">Bangalore</span>
+                </div>
+                <div class="flex items-center gap-4">
+                  <span class="rounded-full bg-[#FFD100]/20 px-3 py-1 text-xs font-medium text-[#FFD100]">Launch</span>
+                  <span class="text-sm text-gray-500">2025</span>
+                </div>
+              </div>
+              <div class="flex items-center justify-between rounded-xl border border-gray-800 bg-gray-900/50 p-4">
+                <div class="flex items-center gap-3">
+                  <div class="h-3 w-3 rounded-full bg-[#9333EA]"></div>
+                  <span class="font-medium text-white">Hyderabad</span>
+                </div>
+                <div class="flex items-center gap-4">
+                  <span class="rounded-full bg-[#9333EA]/20 px-3 py-1 text-xs font-medium text-[#9333EA]">Pilot</span>
+                  <span class="text-sm text-gray-500">2025</span>
+                </div>
+              </div>
+              <div class="flex items-center justify-between rounded-xl border border-gray-800 bg-gray-900/50 p-4">
+                <div class="flex items-center gap-3">
+                  <div class="h-3 w-3 rounded-full bg-[#6B21A8]"></div>
+                  <span class="font-medium text-white">Chennai</span>
+                </div>
+                <div class="flex items-center gap-4">
+                  <span class="rounded-full bg-[#6B21A8]/20 px-3 py-1 text-xs font-medium text-[#6B21A8]">Planning</span>
+                  <span class="text-sm text-gray-500">2026</span>
+                </div>
+              </div>
+              <div class="flex items-center justify-between rounded-xl border border-gray-800 bg-gray-900/50 p-4">
+                <div class="flex items-center gap-3">
+                  <div class="h-3 w-3 rounded-full bg-[#FFD100]"></div>
+                  <span class="font-medium text-white">Mumbai</span>
+                </div>
+                <div class="flex items-center gap-4">
+                  <span class="rounded-full bg-[#FFD100]/20 px-3 py-1 text-xs font-medium text-[#FFD100]">Pipeline</span>
+                  <span class="text-sm text-gray-500">2026</span>
+                </div>
+              </div>
+              <div class="flex items-center justify-between rounded-xl border border-gray-800 bg-gray-900/50 p-4">
+                <div class="flex items-center gap-3">
+                  <div class="h-3 w-3 rounded-full bg-[#9333EA]"></div>
+                  <span class="font-medium text-white">Delhi NCR</span>
+                </div>
+                <div class="flex items-center gap-4">
+                  <span class="rounded-full bg-[#9333EA]/20 px-3 py-1 text-xs font-medium text-[#9333EA]">Pipeline</span>
+                  <span class="text-sm text-gray-500">2027</span>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Visual -->
+          <div class="relative flex items-center justify-center">
+            <div class="relative h-72 w-72 lg:h-80 lg:w-80">
+              <div class="absolute inset-0 rounded-full border border-gray-700/50" style="transform: scale(0.25); opacity: 0.8;"></div>
+              <div class="absolute inset-0 rounded-full border border-gray-700/50" style="transform: scale(0.5); opacity: 0.6;"></div>
+              <div class="absolute inset-0 rounded-full border border-gray-700/50" style="transform: scale(0.75); opacity: 0.4;"></div>
+              <div class="absolute inset-0 rounded-full border border-gray-700/50" style="transform: scale(1); opacity: 0.2;"></div>
+              <div class="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2">
+                <div class="relative">
+                  <div class="absolute inset-0 animate-ping rounded-full bg-[#FFD100]/20"></div>
+                  <div class="relative flex h-16 w-16 items-center justify-center rounded-full bg-gradient-to-br from-[#FFD100] to-[#9333EA]">
+                    <span class="text-2xl font-bold text-white">BLR</span>
+                  </div>
+                </div>
+              </div>
+              <div class="absolute flex h-10 w-10 items-center justify-center rounded-full border border-gray-600 bg-gray-800/80 text-xs font-medium text-gray-300" style="left: calc(50% + 65px); top: calc(50% - 85px);">HYD</div>
+              <div class="absolute flex h-10 w-10 items-center justify-center rounded-full border border-gray-600 bg-gray-800/80 text-xs font-medium text-gray-300" style="left: calc(50% + 80px); top: calc(50% + 60px);">CHN</div>
+              <div class="absolute flex h-10 w-10 items-center justify-center rounded-full border border-gray-600 bg-gray-800/80 text-xs font-medium text-gray-300" style="left: calc(50% - 110px); top: calc(50% + 50px);">MUM</div>
+              <div class="absolute flex h-10 w-10 items-center justify-center rounded-full border border-gray-600 bg-gray-800/80 text-xs font-medium text-gray-300" style="left: calc(50% - 90px); top: calc(50% - 90px);">DEL</div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Data Moat -->
+      <div class="mt-12 rounded-2xl border border-[#FFD100]/20 bg-gradient-to-r from-[#FFD100]/10 to-transparent p-6 lg:p-8">
+        <div class="flex flex-col items-center gap-6 text-center lg:flex-row lg:text-left">
+          <div class="flex-1">
+            <h4 class="text-xl font-bold text-white">Building the Data Moat</h4>
+            <p class="mt-2 text-gray-400">Every ride creates proprietary data: crowd patterns, exit times, driver behavior. This data moat compounds over time, making YatraSync impossible to replicate.</p>
+          </div>
+          <div class="flex gap-6">
+            <div class="text-center">
+              <p class="text-3xl font-bold text-[#FFD100]">10M+</p>
+              <p class="text-xs text-gray-500">Data points/month</p>
+            </div>
+            <div class="text-center">
+              <p class="text-3xl font-bold text-[#9333EA]">94%</p>
+              <p class="text-xs text-gray-500">Prediction accuracy</p>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- CTA SECTION -->
+  <section id="cta" class="relative overflow-hidden bg-white py-24 lg:py-32">
+    <div class="absolute inset-0 bg-gradient-to-b from-gray-50 to-white"></div>
+    <div class="absolute left-1/2 top-0 h-[600px] w-[600px] -translate-x-1/2 rounded-full bg-gradient-to-br from-[#FFD100]/20 via-[#9333EA]/10 to-transparent blur-[100px]"></div>
+
+    <div class="relative mx-auto max-w-4xl px-6 text-center">
+      <div class="mb-8 inline-flex items-center gap-2 rounded-full border border-[#6B21A8]/20 bg-[#6B21A8]/5 px-5 py-2 text-sm text-[#6B21A8]">
+        <svg class="h-4 w-4" fill="currentColor" viewBox="0 0 24 24"><path d="M12 2L15.09 8.26L22 9.27L17 14.14L18.18 21.02L12 17.77L5.82 21.02L7 14.14L2 9.27L8.91 8.26L12 2Z"/></svg>
+        <span>Limited Early Access</span>
+      </div>
+
+      <h2 class="text-3xl font-bold tracking-tight text-gray-900 sm:text-4xl lg:text-5xl">
+        Ready to Never Wait for an <span class="bg-gradient-to-r from-[#FFD100] to-[#6B21A8] bg-clip-text text-transparent">Auto Again?</span>
+      </h2>
+
+      <p class="mx-auto mt-6 max-w-2xl text-lg text-gray-600">
+        Join 12,000+ Bangalore commuters on the waitlist. Early subscribers get lifetime SurgeShield access and priority onboarding.
+      </p>
+
+      <!-- Waitlist Form -->
+      <div class="mx-auto mt-10 max-w-md">
+        <form id="waitlistForm" class="relative">
+          <div class="flex flex-col gap-3 sm:flex-row">
+            <div class="relative flex-1">
+              <svg class="absolute left-4 top-1/2 h-5 w-5 -translate-y-1/2 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"/></svg>
+              <input type="email" id="emailInput" placeholder="Enter your email" class="h-14 w-full rounded-xl border border-gray-200 bg-white pl-12 pr-4 text-gray-900 placeholder:text-gray-400 focus:border-[#FFD100] focus:outline-none focus:ring-2 focus:ring-[#FFD100]/20" required />
+            </div>
+            <button type="submit" class="group inline-flex h-14 items-center justify-center rounded-xl bg-gradient-to-r from-[#FFD100] to-amber-500 px-8 text-base font-semibold text-[#0F0F0F] transition-all hover:shadow-[0_0_40px_rgba(255,209,0,0.4)]">
+              Join Waitlist
+              <svg class="ml-2 h-5 w-5 transition-transform group-hover:translate-x-1" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 8l4 4m0 0l-4 4m4-4H3"/></svg>
+            </button>
+          </div>
+        </form>
+        <div id="successMessage" class="hidden rounded-2xl border border-green-200 bg-green-50 p-6">
+          <div class="flex items-center justify-center gap-3">
+            <div class="flex h-10 w-10 items-center justify-center rounded-full bg-green-500">
+              <svg class="h-5 w-5 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7" />
+              </svg>
+            </div>
+            <div class="text-left">
+              <p class="font-semibold text-green-800">You're on the list!</p>
+              <p class="text-sm text-green-600">We'll notify you when we launch in your area.</p>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Social Proof -->
+      <div class="mt-12 flex flex-wrap items-center justify-center gap-8">
+        <div class="flex -space-x-2">
+          <div class="h-10 w-10 rounded-full border-2 border-white" style="background: linear-gradient(75deg, #FFD100, #6B21A8);"></div>
+          <div class="h-10 w-10 rounded-full border-2 border-white" style="background: linear-gradient(105deg, #FFD100, #6B21A8);"></div>
+          <div class="h-10 w-10 rounded-full border-2 border-white" style="background: linear-gradient(135deg, #FFD100, #6B21A8);"></div>
+          <div class="h-10 w-10 rounded-full border-2 border-white" style="background: linear-gradient(165deg, #FFD100, #6B21A8);"></div>
+          <div class="h-10 w-10 rounded-full border-2 border-white" style="background: linear-gradient(195deg, #FFD100, #6B21A8);"></div>
+        </div>
+        <p class="text-sm text-gray-600">
+          <span class="font-semibold text-gray-900">12,847</span> people on the waitlist
+        </p>
+      </div>
+
+      <!-- Trust Badges -->
+      <div class="mt-16 border-t border-gray-100 pt-12">
+        <p class="mb-6 text-sm text-gray-500">Backed by</p>
+        <div class="flex flex-wrap items-center justify-center gap-8">
+          <div class="flex items-center gap-2 text-gray-400">
+            <div class="flex h-8 w-8 items-center justify-center rounded bg-orange-500 text-xs font-bold text-white">Y</div>
+            <span class="font-medium text-gray-600">Combinator</span>
+          </div>
+          <div class="h-6 w-px bg-gray-200"></div>
+          <span class="text-sm text-gray-500">Featured in</span>
+          <span class="font-semibold text-gray-700">TechCrunch</span>
+          <span class="font-semibold text-gray-700">YourStory</span>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- FOOTER -->
+  <footer class="border-t border-gray-800 bg-[#0F0F0F] py-12">
+    <div class="mx-auto max-w-7xl px-6">
+      <div class="flex flex-col items-center justify-between gap-8 md:flex-row">
+        <div class="flex items-center gap-2">
+          <div class="flex h-8 w-8 items-center justify-center rounded-lg bg-gradient-to-br from-[#FFD100] to-amber-500">
+            <svg class="h-5 w-5 text-[#0F0F0F]" viewBox="0 0 24 24" fill="currentColor">
+              <path d="M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5" />
+            </svg>
+          </div>
+          <span class="text-lg font-bold text-white">YatraSync</span>
+        </div>
+
+        <div class="flex flex-wrap items-center justify-center gap-6 text-sm text-gray-400">
+          <a href="#" class="transition-colors hover:text-white">Privacy</a>
+          <a href="#" class="transition-colors hover:text-white">Terms</a>
+          <a href="#" class="transition-colors hover:text-white">Contact</a>
+          <a href="#" class="transition-colors hover:text-white">Careers</a>
+        </div>
+
+        <div class="flex items-center gap-4">
+          <a href="#" class="flex h-10 w-10 items-center justify-center rounded-full border border-gray-800 text-gray-400 transition-all hover:border-[#FFD100] hover:text-[#FFD100]" aria-label="Twitter">
+            <svg class="h-4 w-4" fill="currentColor" viewBox="0 0 24 24"><path d="M23 3a10.9 10.9 0 01-3.14 1.53 4.48 4.48 0 00-7.86 3v1A10.66 10.66 0 013 4s-4 9 5 13a11.64 11.64 0 01-7 2c9 5 20 0 20-11.5a4.5 4.5 0 00-.08-.83A7.72 7.72 0 0023 3z"/></svg>
+          </a>
+          <a href="#" class="flex h-10 w-10 items-center justify-center rounded-full border border-gray-800 text-gray-400 transition-all hover:border-[#FFD100] hover:text-[#FFD100]" aria-label="LinkedIn">
+            <svg class="h-4 w-4" fill="currentColor" viewBox="0 0 24 24"><path d="M16 8a6 6 0 016 6v7h-4v-7a2 2 0 00-2-2 2 2 0 00-2 2v7h-4v-7a6 6 0 016-6zM2 9h4v12H2z"/><circle cx="4" cy="4" r="2"/></svg>
+          </a>
+          <a href="#" class="flex h-10 w-10 items-center justify-center rounded-full border border-gray-800 text-gray-400 transition-all hover:border-[#FFD100] hover:text-[#FFD100]" aria-label="Instagram">
+            <svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><rect x="2" y="2" width="20" height="20" rx="5" ry="5"/><path d="M16 11.37A4 4 0 1112.63 8 4 4 0 0116 11.37z"/><line x1="17.5" y1="6.5" x2="17.51" y2="6.5"/></svg>
+          </a>
+        </div>
+      </div>
+
+      <div class="mt-8 border-t border-gray-800 pt-8 text-center">
+        <p class="text-sm text-gray-500">2025 YatraSync Technologies Pvt. Ltd. All rights reserved.</p>
+        <p class="mt-2 text-xs text-gray-600">Made with love in Bangalore for Bangalore</p>
+      </div>
+    </div>
+  </footer>
+
+  <script>
+    // Mobile menu toggle
+    document.getElementById('menuToggle').addEventListener('click', function() {
+      const mobileMenu = document.getElementById('mobileMenu');
+      mobileMenu.classList.toggle('hidden');
+    });
+
+    // Waitlist form
+    document.getElementById('waitlistForm').addEventListener('submit', function(e) {
+      e.preventDefault();
+      const email = document.getElementById('emailInput').value;
+      if (email) {
+        document.getElementById('waitlistForm').classList.add('hidden');
+        document.getElementById('successMessage').classList.remove('hidden');
+      }
+    });
+  </script>
+</body>
+</html>
