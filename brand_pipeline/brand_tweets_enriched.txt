@@ -1,0 +1,6 @@
+tweet_id,text,objects_detected,dominant_colors,brand_visible,visual_sentiment
+1,"NammaYatri is a game changer...","Auto-rickshaw, Driver, Smartphone","Yellow, Blue",Yes,Positive
+3,"Love the yellow and blue...","Branded Auto, Street, Metro Pillar","Yellow, Blue, Grey",Yes,Positive
+5,"Why is the app so much faster...","App UI Screenshot, Phone","White, Blue",Yes,Neutral
+7,"Can we get NammaYatri for cabs...","Auto, Traffic, Sunlight","Yellow, Green",Yes,Positive
+9,"Happy driver = Happy ride...","Smiling Driver, Interior of Auto","Yellow, Brown",No,Positive
